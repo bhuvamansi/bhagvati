@@ -1,18 +1,36 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { BiLeftArrowAlt } from "react-icons/bi";
 
-export const AdminShell = ({ title, description, action, children }) => (
-  <section className="rounded-[2rem] border border-black/5 bg-white p-6 shadow-sm lg:p-8">
-    <div className="mb-6 flex flex-col gap-4 border-b border-silk pb-5 md:flex-row md:items-end md:justify-between">
-      <div>
-        <p className="tracking-label text-stone">Admin</p>
-        <h1 className="mt-3 font-serif-display text-4xl text-charcoal">{title}</h1>
-        {description ? <p className="mt-3 max-w-2xl text-sm leading-7 text-stone">{description}</p> : null}
+
+export const AdminShell = ({ isEdit = false, title, description, action, children }) => {
+  const navigate = useNavigate();
+
+  return (
+    <section className="rounded-[2rem] border border-black/5 bg-white p-6 shadow-sm lg:p-7">
+      <div className="mb-6 flex flex-col gap-4 border-b border-silk pb-5 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-start gap-4">
+          {isEdit && <button
+            onClick={() => navigate(-1)}
+            className="mt-2 flex h-10 w-10 items-center justify-center rounded-full border border-black/10 hover:bg-black/5 transition"
+          >
+            <BiLeftArrowAlt />
+          </button>}
+          <div>
+            <h1 className="font-serif-display text-4xl text-charcoal">{title}</h1>
+            {description ? (
+              <p className="max-w-2xl text-sm leading-7 text-stone">
+                {description}
+              </p>
+            ) : null}
+          </div>
+        </div>
+        {action}
       </div>
-      {action}
-    </div>
-    {children}
-  </section>
-);
+      {children}
+    </section>
+  );
+};
 
 export const StatCard = ({ label, value }) => (
   <div className="rounded-[1.5rem] border border-black/5 bg-ivory p-5">

@@ -23,7 +23,13 @@ import AdminLayout from './components/admin/AdminLayout';
 import ProtectedAdminRoute from './components/admin/ProtectedAdminRoute';
 import AdminLoginPage from './pages/Admin/AdminLoginPage';
 import AdminDashboardPage from './pages/Admin/AdminDashboardPage';
-import { AdminArchivesPage, AdminEnquiriesPage, AdminNewsletterPage, AdminProductsPage, AdminProjectsPage, AdminSettingsPage, AdminUsersPage } from './pages/Admin/AdminCrudPages';
+import { AdminEnquiriesPage, AdminNewsletterPage, AdminSettingsPage, AdminUsersPage } from './pages/Admin/AdminCrudPages';
+import { AdminProductFormPage } from './pages/Admin/ProductComponent/AdminProductFormPage';
+import { AdminProductsPage } from './pages/Admin/ProductComponent/AdminProductsPage';
+import { AdminProjectsPage } from './pages/Admin/ProjectsComponent/AdminProjectsPage';
+import { AdminProjectFormPage } from './pages/Admin/ProjectsComponent/AdminProjectFormPage';
+import { AdminArchivesPage } from './pages/Admin/ArchivesComponent/AdminArchivesPage';
+import { AdminArchiveFormPage } from './pages/Admin/ArchivesComponent/AdminArchiveFormPage';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -62,8 +68,14 @@ function AppLayout() {
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboardPage />} />
             <Route path="products" element={<AdminProductsPage />} />
+            <Route path="products/create" element={<AdminProductFormPage />} />
+            <Route path="products/edit/:id" element={<AdminProductFormPage />} />
             <Route path="projects" element={<AdminProjectsPage />} />
+            <Route path="projects/create" element={<AdminProjectFormPage />} />
+            <Route path="projects/edit/:id" element={<AdminProjectFormPage />} />
             <Route path="archives" element={<AdminArchivesPage />} />
+            <Route path="archives/create" element={<AdminArchiveFormPage />} />
+            <Route path="archives/edit/:id/" element={<AdminArchiveFormPage />} />
             <Route path="enquiries" element={<AdminEnquiriesPage />} />
             <Route path="newsletter" element={<AdminNewsletterPage />} />
             <Route path="users" element={<AdminUsersPage />} />

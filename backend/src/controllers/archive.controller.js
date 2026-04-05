@@ -28,6 +28,7 @@ const pickAllowedArchiveFields = (body) => {
     'publishedAt',
     'seoTitle',
     'seoDescription',
+    'content'
   ];
 
   const filtered = {};

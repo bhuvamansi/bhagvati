@@ -262,6 +262,16 @@ const normalizeImages = (images = []) => {
 productSchema.pre('validate', function () {
   this.images = normalizeImages(this.images);
 
+  if ((!this.images || this.images.length === 0) && this.coverImage) {
+    this.images = [
+      {
+        url: this.coverImage,
+        alt: this.name || '',
+        publicId: '',
+      },
+    ];
+  }
+
   if (!this.coverImage && this.images.length > 0) {
     this.coverImage = this.images[0].url;
   }
