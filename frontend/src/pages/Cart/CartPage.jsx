@@ -26,7 +26,7 @@ const CartPage = () => {
             {items.map((item) => (
               <div key={item._id} className="flex gap-8 py-8 border-b border-silk">
                 <div className="img-hover overflow-hidden shrink-0" style={{ width: '120px', aspectRatio: '3/4' }}>
-                  <img src={item.img} alt={item.name} className="w-full h-full object-cover"/>
+                  <img src={item.img} alt={item.name} className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 flex flex-col justify-between">
                   <div>
@@ -61,7 +61,12 @@ const CartPage = () => {
                 <span className="font-sans text-xs tracking-widest uppercase text-charcoal">Total</span>
                 <span className="font-serif-display text-lg font-light text-charcoal">{formatCurrency(totalPrice)}</span>
               </div>
-              <button className="w-full py-4 bg-charcoal text-ivory font-sans text-xs tracking-widest uppercase hover:bg-charcoal/80 transition-colors duration-300 mb-4">Proceed to Checkout</button>
+              <Link
+                to="/checkout"
+                className="inline-flex items-center justify-center rounded-full bg-charcoal px-6 py-4 mb-2 text-xs uppercase tracking-[0.28em] text-ivory transition hover:opacity-90"
+              >
+                Proceed to Checkout
+              </Link>
               <Link to="/products" className="block text-center font-sans text-xs tracking-widest uppercase text-stone hover:text-charcoal transition-colors duration-300 underline-link">Continue Shopping</Link>
             </div>
           </div>

@@ -30,6 +30,9 @@ import { AdminProjectsPage } from './pages/Admin/ProjectsComponent/AdminProjects
 import { AdminProjectFormPage } from './pages/Admin/ProjectsComponent/AdminProjectFormPage';
 import { AdminArchivesPage } from './pages/Admin/ArchivesComponent/AdminArchivesPage';
 import { AdminArchiveFormPage } from './pages/Admin/ArchivesComponent/AdminArchiveFormPage';
+import CheckoutPage from './pages/Checkout/CheckoutPage';
+import OrderSuccessPage from './pages/Checkout/OrderSuccessPage';
+
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -59,6 +62,8 @@ function AppLayout() {
           <Route path="/store" element={<StorePage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
