@@ -33,12 +33,15 @@ import { AdminArchiveFormPage } from './pages/Admin/ArchivesComponent/AdminArchi
 import CheckoutPage from './pages/Checkout/CheckoutPage';
 import OrderSuccessPage from './pages/Checkout/OrderSuccessPage';
 import MyOrdersPage from './pages/Orders/MyOrdersPage';
+import AdminOrdersPage from './pages/Admin/AdminOrdersPage';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
+
   return null;
 };
 
@@ -90,6 +93,7 @@ function AppLayout() {
           >
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboardPage />} />
+            <Route path="orders" element={<AdminOrdersPage />} />
             <Route path="products" element={<AdminProductsPage />} />
             <Route path="products/create" element={<AdminProductFormPage />} />
             <Route path="products/edit/:id" element={<AdminProductFormPage />} />

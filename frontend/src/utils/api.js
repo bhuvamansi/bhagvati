@@ -137,6 +137,8 @@ export const updateAdminUser = (id, data) => request(`/admin/users/${id}`, { met
 export const createOrder = (data) => request('/orders', { method: 'POST', data });
 export const getMyOrders = () => request('/orders/my-orders');
 export const getMyOrderById = (id) => request(`/orders/my-orders/${id}`);
+export const cancelMyOrder = (id) =>
+  request(`/orders/my-orders/${id}/cancel`, { method: 'PATCH' });
 
 export const getAdminOrders = () => request('/orders');
 export const getAdminOrderById = (id) => request(`/orders/${id}`);

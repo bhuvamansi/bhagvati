@@ -14,6 +14,15 @@ const nextStatusMap = {
 
 const paymentStatuses = ['pending', 'paid', 'failed', 'cod'];
 
+const statusBadgeMap = {
+  placed: 'bg-blue-50 text-blue-700 border-blue-200',
+  under_process: 'bg-amber-50 text-amber-700 border-amber-200',
+  packed: 'bg-violet-50 text-violet-700 border-violet-200',
+  shipped: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+  delivered: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  cancelled: 'bg-red-50 text-red-700 border-red-200',
+};
+
 const AdminOrdersPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +36,7 @@ const AdminOrdersPage = () => {
       setOrders(response?.orders || []);
       setError('');
     } catch (err) {
+      console.error(err);
       setError(err?.message || 'Failed to load orders.');
     } finally {
       setLoading(false);
@@ -66,97 +76,138 @@ const AdminOrdersPage = () => {
       title="Orders"
       description="Manage placed orders and update order progress like Flipkart or Amazon."
     >
-      {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div> : null}
+      {error ? (
+        <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+          {error}
+        </div>
+      ) : null}
 
       {loading ? (
         <div className="rounded-[1.5rem] border border-black/5 p-5">Loading orders...</div>
       ) : (
         <div className="space-y-6">
-          {orders.map((order) => (
-            <div
-              key={order._id}
-              className="rounded-[1.5rem] border border-black/5 bg-white p-5 shadow-sm"
-            >
-              <div className="grid gap-4 border-b border-silk pb-5 md:grid-cols-4">
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-stone">Customer</p>
-                  <p className="mt-2 font-medium text-charcoal">{order.user?.name || 'User'}</p>
-                  <p className="text-stone">{order.user?.email || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-stone">Date</p>
-                  <p className="mt-2 text-charcoal">{shortDate(order.createdAt)}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-stone">Total</p>
-                  <p className="mt-2 text-charcoal">{formatCurrency(order.totalAmount)}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-stone">Items</p>
-                  <p className="mt-2 text-charcoal">{order.items?.length || 0}</p>
-                </div>
-              </div>
+          {orders.map((order) => {
+            const isFinalState =
+              order.orderStatus === 'delivered' || order.orderStatus === 'cancelled';
 
-              <div className="mt-5 grid gap-5 lg:grid-cols-[1.2fr_0.8fr_0.8fr]">
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-stone mb-3">Items</p>
-                  <div className="space-y-3">
-                    {order.items?.map((item, index) => (
-                      <div
-                        key={`${item.product}-${index}`}
-                        className="flex items-center justify-between rounded-2xl border border-silk bg-ivory px-4 py-3"
-                      >
-                        <div>
-                          <p className="font-medium text-charcoal">{item.name}</p>
-                          <p className="text-sm text-stone">Qty: {item.qty}</p>
+            return (
+              <div
+                key={order._id}
+                className="rounded-[1.5rem] border border-black/5 bg-white p-5 shadow-sm"
+              >
+                <div className="grid gap-4 border-b border-silk pb-5 md:grid-cols-4">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-stone">Customer</p>
+                    <p className="mt-2 font-medium text-charcoal">{order.user?.name || 'User'}</p>
+                    <p className="text-stone">{order.user?.email || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-stone">Date</p>
+                    <p className="mt-2 text-charcoal">{shortDate(order.createdAt)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-stone">Total</p>
+                    <p className="mt-2 text-charcoal">{formatCurrency(order.totalAmount)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-stone">Items</p>
+                    <p className="mt-2 text-charcoal">{order.items?.length || 0}</p>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <span
+                    className={`inline-flex items-center rounded-full border px-4 py-2 text-[11px] uppercase tracking-[0.2em] ${
+                      statusBadgeMap[order.orderStatus] ||
+                      'bg-stone-50 text-stone-700 border-stone-200'
+                    }`}
+                  >
+                    {titleCase(order.orderStatus)}
+                  </span>
+
+                  <span className="inline-flex items-center rounded-full border border-silk px-4 py-2 text-[11px] uppercase tracking-[0.2em] text-charcoal">
+                    Payment {titleCase(order.paymentStatus)}
+                  </span>
+                </div>
+
+                <div className="mt-5 grid gap-5 lg:grid-cols-[1.2fr_0.8fr_0.8fr]">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-stone mb-3">Items</p>
+                    <div className="space-y-3">
+                      {order.items?.map((item, index) => (
+                        <div
+                          key={`${item.product}-${index}`}
+                          className="flex items-center justify-between rounded-2xl border border-silk bg-ivory px-4 py-3"
+                        >
+                          <div>
+                            <p className="font-medium text-charcoal">{item.name}</p>
+                            <p className="text-sm text-stone">Qty: {item.qty}</p>
+                          </div>
+                          <p className="text-charcoal">{formatCurrency(item.price * item.qty)}</p>
                         </div>
-                        <p className="text-charcoal">{formatCurrency(item.price * item.qty)}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-stone mb-3">Order Status</p>
-                  <div className="rounded-2xl border border-silk bg-ivory p-4">
-                    <p className="mb-3 text-sm text-charcoal">Current: {titleCase(order.orderStatus)}</p>
-                    <select
-                      className="w-full rounded-xl border border-silk bg-white px-3 py-3 outline-none"
-                      value=""
-                      onChange={(e) => e.target.value && handleStatusChange(order, e.target.value)}
-                      disabled={savingId === order._id}
-                    >
-                      <option value="">Change order status</option>
-                      {(nextStatusMap[order.orderStatus] || []).map((status) => (
-                        <option key={status} value={status}>
-                          {titleCase(status)}
-                        </option>
                       ))}
-                    </select>
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-stone mb-3">Payment Status</p>
-                  <div className="rounded-2xl border border-silk bg-ivory p-4">
-                    <select
-                      className="w-full rounded-xl border border-silk bg-white px-3 py-3 outline-none"
-                      value={order.paymentStatus}
-                      onChange={(e) => handlePaymentStatusChange(order, e.target.value)}
-                      disabled={savingId === order._id}
-                    >
-                      {paymentStatuses.map((status) => (
-                        <option key={status} value={status}>
-                          {titleCase(status)}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="mt-3 text-sm text-stone">Method: {titleCase(order.paymentMethod)}</p>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-stone mb-3">Order Status</p>
+                    <div className="rounded-2xl border border-silk bg-ivory p-4">
+                      <p className="mb-3 text-sm text-charcoal">
+                        Current: {titleCase(order.orderStatus)}
+                      </p>
+
+                      {isFinalState ? (
+                        <div
+                          className={`rounded-xl border px-4 py-3 text-sm ${
+                            order.orderStatus === 'cancelled'
+                              ? 'border-red-200 bg-red-50 text-red-700'
+                              : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                          }`}
+                        >
+                          This order is in a final state and can no longer be changed.
+                        </div>
+                      ) : (
+                        <select
+                          className="w-full rounded-xl border border-silk bg-white px-3 py-3 outline-none"
+                          value=""
+                          onChange={(e) => e.target.value && handleStatusChange(order, e.target.value)}
+                          disabled={savingId === order._id}
+                        >
+                          <option value="">Change order status</option>
+                          {(nextStatusMap[order.orderStatus] || []).map((status) => (
+                            <option key={status} value={status}>
+                              {titleCase(status)}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-stone mb-3">Payment Status</p>
+                    <div className="rounded-2xl border border-silk bg-ivory p-4">
+                      <select
+                        className="w-full rounded-xl border border-silk bg-white px-3 py-3 outline-none"
+                        value={order.paymentStatus}
+                        onChange={(e) => handlePaymentStatusChange(order, e.target.value)}
+                        disabled={savingId === order._id}
+                      >
+                        {paymentStatuses.map((status) => (
+                          <option key={status} value={status}>
+                            {titleCase(status)}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="mt-3 text-sm text-stone">
+                        Method: {titleCase(order.paymentMethod)}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {!orders.length && (
             <div className="rounded-[1.5rem] border border-black/5 p-5">No orders found.</div>

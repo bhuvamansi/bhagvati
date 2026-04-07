@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { getMyOrders } from '../../utils/api';
+import { cancelMyOrder, getMyOrders } from '../../utils/api';
 import { formatCurrency, shortDate, titleCase } from '../../utils/format';
 
 const steps = ['placed', 'under_process', 'packed', 'shipped', 'delivered'];
@@ -24,34 +24,56 @@ const statusBadgeMap = {
   cancelled: 'bg-red-50 text-red-700 border-red-200',
 };
 
+const cancellableStatuses = ['placed', 'under_process'];
+
 const MyOrdersPage = () => {
   const { isAuthenticated, authLoading } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expandedOrderId, setExpandedOrderId] = useState('');
+  const [cancellingId, setCancellingId] = useState('');
+
+  const loadOrders = async () => {
+    try {
+      setLoading(true);
+      const response = await getMyOrders();
+      const orderList = response?.orders || [];
+      setOrders(orderList);
+      setExpandedOrderId((prev) => prev || orderList[0]?._id || '');
+      setError('');
+    } catch (err) {
+      console.error(err);
+      setError(err?.message || 'Failed to load orders.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!isAuthenticated) return;
-
-    const loadOrders = async () => {
-      try {
-        setLoading(true);
-        const response = await getMyOrders();
-        const orderList = response?.orders || [];
-        setOrders(orderList);
-        setExpandedOrderId(orderList[0]?._id || '');
-        setError('');
-      } catch (err) {
-        console.error(err);
-        setError(err?.message || 'Failed to load orders.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadOrders();
   }, [isAuthenticated]);
+
+  const handleCancelOrder = async (order) => {
+    const confirmed = window.confirm(
+      'Are you sure you want to cancel this order?'
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setCancellingId(order._id);
+      await cancelMyOrder(order._id);
+      await loadOrders();
+      alert('Order cancelled successfully.');
+    } catch (err) {
+      console.error(err);
+      alert(err?.message || 'Failed to cancel order.');
+    } finally {
+      setCancellingId('');
+    }
+  };
 
   if (!authLoading && !isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -102,6 +124,7 @@ const MyOrdersPage = () => {
 
               const firstItem = order.items?.[0];
               const isExpanded = expandedOrderId === order._id;
+              const canCancel = cancellableStatuses.includes(order.orderStatus);
 
               return (
                 <div
@@ -226,6 +249,17 @@ const MyOrdersPage = () => {
                           >
                             {isExpanded ? 'Hide Details' : 'Track Order'}
                           </button>
+
+                          {canCancel && (
+                            <button
+                              type="button"
+                              onClick={() => handleCancelOrder(order)}
+                              disabled={cancellingId === order._id}
+                              className="inline-flex items-center justify-center rounded-full border border-red-300 px-5 py-3 text-xs uppercase tracking-[0.2em] text-red-600 transition hover:bg-red-600 hover:text-white disabled:opacity-60"
+                            >
+                              {cancellingId === order._id ? 'Cancelling...' : 'Cancel Order'}
+                            </button>
+                          )}
 
                           <Link
                             to="/products"

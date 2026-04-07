@@ -11,6 +11,8 @@ const allowedStatusTransitions = {
   cancelled: [],
 };
 
+const userCancellableStatuses = ['placed', 'under_process'];
+
 const buildTimelineNote = (status) => {
   switch (status) {
     case 'placed':
@@ -186,6 +188,45 @@ export const getMyOrderById = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
+      order,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const cancelMyOrder = async (req, res, next) => {
+  try {
+    const order = await Order.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
+
+    if (!order) {
+      return next(new AppError('Order not found.', 404));
+    }
+
+    if (!userCancellableStatuses.includes(order.orderStatus)) {
+      return next(
+        new AppError(
+          'This order can no longer be cancelled. Only placed or under process orders can be cancelled.',
+          400
+        )
+      );
+    }
+
+    order.orderStatus = 'cancelled';
+    order.statusTimeline.push({
+      status: 'cancelled',
+      note: 'Order cancelled by user.',
+      changedAt: new Date(),
+    });
+
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Order cancelled successfully.',
       order,
     });
   } catch (error) {
