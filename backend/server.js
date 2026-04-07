@@ -20,6 +20,7 @@ import archiveRoutes from './src/routes/archive.routes.js';
 import siteSettingsRoutes from './src/routes/siteSettings.routes.js';
 import newsletterRoutes from './src/routes/newsletter.routes.js';
 import adminRoutes from './src/routes/admin.routes.js';
+import orderRoutes from './src/routes/orderRoutes.js';
 
 dotenv.config();
 
@@ -108,6 +109,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/orders', orderRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/faqs', faqRoutes);

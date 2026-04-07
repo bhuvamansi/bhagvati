@@ -1,139 +1,154 @@
-import Order from '../../models/Order.js';
+import mongoose from 'mongoose';
 
-export const createOrder = async (req, res) => {
-  try {
-    const {
-      items,
-      shippingAddress,
-      paymentMethod,
-      paymentDetails,
-      subtotal,
-      shippingFee,
-      discount,
-      totalAmount,
-      promoCode,
-    } = req.body;
+const orderItemSchema = new mongoose.Schema(
+  {
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true,
+    },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    image: {
+      type: String,
+      default: '',
+    },
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    qty: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+  },
+  { _id: false }
+);
 
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Cart items are required',
-      });
-    }
+const shippingAddressSchema = new mongoose.Schema(
+  {
+    firstName: { type: String, required: true, trim: true },
+    lastName: { type: String, required: true, trim: true },
+    email: { type: String, required: true, trim: true, lowercase: true },
+    phone: { type: String, required: true, trim: true },
+    address: { type: String, required: true, trim: true },
+    apartment: { type: String, default: '', trim: true },
+    city: { type: String, required: true, trim: true },
+    state: { type: String, required: true, trim: true },
+    pincode: { type: String, required: true, trim: true },
+    country: { type: String, required: true, trim: true, default: 'India' },
+  },
+  { _id: false }
+);
 
-    if (!shippingAddress) {
-      return res.status(400).json({
-        success: false,
-        message: 'Shipping address is required',
-      });
-    }
+const statusTimelineSchema = new mongoose.Schema(
+  {
+    status: {
+      type: String,
+      enum: ['placed', 'under_process', 'packed', 'shipped', 'delivered', 'cancelled'],
+      required: true,
+    },
+    note: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    changedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false }
+);
 
-    const requiredAddressFields = [
-      'firstName',
-      'lastName',
-      'email',
-      'phone',
-      'address',
-      'city',
-      'state',
-      'pincode',
-      'country',
-    ];
-
-    for (const field of requiredAddressFields) {
-      if (!shippingAddress[field]?.toString().trim()) {
-        return res.status(400).json({
-          success: false,
-          message: `${field} is required`,
-        });
-      }
-    }
-
-    if (!paymentMethod) {
-      return res.status(400).json({
-        success: false,
-        message: 'Payment method is required',
-      });
-    }
-
-    const normalizedItems = items.map((item) => ({
-      product: item.product || item._id,
-      name: item.name,
-      image: item.image || item.img || '',
-      price: Number(item.price) || 0,
-      qty: Number(item.qty) || 1,
-    }));
-
-    const paymentStatus = paymentMethod === 'cod' ? 'cod' : 'pending';
-
-    const order = await Order.create({
-      user: req.user?._id || null,
-      items: normalizedItems,
-      shippingAddress,
-      paymentMethod,
-      paymentStatus,
-      paymentDetails: paymentDetails || {},
-      subtotal: Number(subtotal) || 0,
-      shippingFee: Number(shippingFee) || 0,
-      discount: Number(discount) || 0,
-      totalAmount: Number(totalAmount) || 0,
-      promoCode: promoCode || '',
-      orderStatus: 'placed',
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: 'Order placed successfully',
-      order,
-    });
-  } catch (error) {
-    console.error('CREATE_ORDER_ERROR:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to place order',
-    });
+const orderSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
+    items: {
+      type: [orderItemSchema],
+      required: true,
+      validate: [
+        (val) => Array.isArray(val) && val.length > 0,
+        'Order must contain at least one item',
+      ],
+    },
+    shippingAddress: {
+      type: shippingAddressSchema,
+      required: true,
+    },
+    paymentMethod: {
+      type: String,
+      enum: ['card', 'upi', 'netbanking', 'wallet', 'cod', 'emi', 'banktransfer'],
+      required: true,
+    },
+    paymentStatus: {
+      type: String,
+      enum: ['pending', 'paid', 'failed', 'cod'],
+      default: 'pending',
+    },
+    paymentDetails: {
+      cardName: { type: String, default: '' },
+      upiId: { type: String, default: '' },
+      bankName: { type: String, default: '' },
+      walletName: { type: String, default: '' },
+      emiPlan: { type: String, default: '' },
+      transferReference: { type: String, default: '' },
+    },
+    subtotal: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    shippingFee: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    discount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    totalAmount: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    promoCode: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    orderStatus: {
+      type: String,
+      enum: ['placed', 'under_process', 'packed', 'shipped', 'delivered', 'cancelled'],
+      default: 'placed',
+      index: true,
+    },
+    statusTimeline: {
+      type: [statusTimelineSchema],
+      default: [],
+    },
+    deliveredAt: {
+      type: Date,
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
   }
-};
+);
 
-export const getMyOrders = async (req, res) => {
-  try {
-    if (!req.user?._id) {
-      return res.status(401).json({
-        success: false,
-        message: 'Unauthorized',
-      });
-    }
+const Order = mongoose.model('Order', orderSchema);
 
-    const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
-
-    return res.status(200).json({
-      success: true,
-      orders,
-    });
-  } catch (error) {
-    console.error('GET_MY_ORDERS_ERROR:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to fetch orders',
-    });
-  }
-};
-
-export const getAllOrders = async (req, res) => {
-  try {
-    const orders = await Order.find()
-      .populate('user', 'name email')
-      .sort({ createdAt: -1 });
-
-    return res.status(200).json({
-      success: true,
-      orders,
-    });
-  } catch (error) {
-    console.error('GET_ALL_ORDERS_ERROR:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to fetch all orders',
-    });
-  }
-};
+export default Order;

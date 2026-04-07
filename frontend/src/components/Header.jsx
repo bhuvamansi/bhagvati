@@ -76,6 +76,14 @@ const Header = () => {
                   <span className="tracking-nav font-sans text-charcoal">
                     Hi, {user?.name?.split(' ')[0] || 'User'}
                   </span>
+
+                  <Link
+                    to="/orders"
+                    className="tracking-nav font-sans text-charcoal hover:text-stone transition-colors duration-300"
+                  >
+                    My Orders
+                  </Link>
+
                   <button
                     type="button"
                     onClick={handleLogout}

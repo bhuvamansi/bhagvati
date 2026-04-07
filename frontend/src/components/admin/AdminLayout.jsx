@@ -4,6 +4,7 @@ import { useAdmin } from '../../context/AdminContext';
 
 const links = [
   ['Dashboard', '/admin/dashboard'],
+  ['Orders', '/admin/orders'],
   ['Products', '/admin/products'],
   ['Projects', '/admin/projects'],
   ['Archives', '/admin/archives'],
@@ -63,6 +64,7 @@ const AdminLayout = () => {
             </div>
           </button>
         </div>
+
         <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
           <aside className="hidden rounded-[2rem] border border-black/5 bg-white p-5 shadow-sm lg:block">
             <Link to="/" className="font-serif-display text-2xl text-charcoal">
@@ -71,15 +73,15 @@ const AdminLayout = () => {
             <p className="mt-2 text-xs uppercase tracking-[0.28em] text-stone">
               Admin panel
             </p>
+
             <div className="mt-6 space-y-2">
               {links.map(([label, href]) => (
                 <NavLink
                   key={href}
                   to={href}
                   className={({ isActive }) =>
-                    `block rounded-2xl px-4 py-3 text-sm transition ${isActive
-                      ? 'bg-charcoal text-ivory'
-                      : 'text-charcoal hover:bg-cream'
+                    `block rounded-2xl px-4 py-3 text-sm transition ${
+                      isActive ? 'bg-charcoal text-ivory' : 'text-charcoal hover:bg-cream'
                     }`
                   }
                 >
@@ -87,6 +89,7 @@ const AdminLayout = () => {
                 </NavLink>
               ))}
             </div>
+
             <div className="mt-8 rounded-2xl bg-cream p-4">
               <p className="text-xs uppercase tracking-[0.24em] text-stone">
                 Logged in as
@@ -106,19 +109,17 @@ const AdminLayout = () => {
             </button>
           </aside>
 
-          {/* Mobile Sidebar Overlay */}
           <div
-            className={`fixed inset-0 z-40 bg-black/40 transition-all duration-300 lg:hidden ${isSidebarOpen
-              ? 'pointer-events-auto opacity-100'
-              : 'pointer-events-none opacity-0'
-              }`}
+            className={`fixed inset-0 z-40 bg-black/40 transition-all duration-300 lg:hidden ${
+              isSidebarOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+            }`}
             onClick={closeSidebar}
           />
 
-          {/* Mobile Sidebar */}
           <aside
-            className={`fixed left-0 top-0 z-50 h-screen w-[290px] overflow-y-auto bg-white p-5 shadow-2xl transition-transform duration-300 ease-in-out lg:hidden ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-              }`}
+            className={`fixed left-0 top-0 z-50 h-screen w-[290px] overflow-y-auto bg-white p-5 shadow-2xl transition-transform duration-300 ease-in-out lg:hidden ${
+              isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
           >
             <div className="flex items-start justify-between gap-2">
               <div>
@@ -136,6 +137,7 @@ const AdminLayout = () => {
                 ×
               </button>
             </div>
+
             <div className="mt-6 space-y-2">
               {links.map(([label, href]) => (
                 <NavLink
@@ -143,9 +145,8 @@ const AdminLayout = () => {
                   to={href}
                   onClick={closeSidebar}
                   className={({ isActive }) =>
-                    `block rounded-2xl px-4 py-3 text-sm transition ${isActive
-                      ? 'bg-charcoal text-ivory'
-                      : 'text-charcoal hover:bg-cream'
+                    `block rounded-2xl px-4 py-3 text-sm transition ${
+                      isActive ? 'bg-charcoal text-ivory' : 'text-charcoal hover:bg-cream'
                     }`
                   }
                 >
@@ -153,16 +154,6 @@ const AdminLayout = () => {
                 </NavLink>
               ))}
             </div>
-
-            {/* <div className="mt-8 rounded-2xl bg-cream p-4">
-              <p className="text-xs uppercase tracking-[0.24em] text-stone">
-                Logged in as
-              </p>
-              <p className="mt-2 font-medium text-charcoal">
-                {admin?.name || 'Admin'}
-              </p>
-              <p className="text-sm text-stone">{admin?.email}</p>
-            </div> */}
 
             <button
               type="button"
@@ -173,7 +164,6 @@ const AdminLayout = () => {
             </button>
           </aside>
 
-          {/* Main Content */}
           <div className="space-y-6">
             <Outlet />
           </div>

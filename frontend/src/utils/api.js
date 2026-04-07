@@ -133,4 +133,14 @@ export const getAdminAnalytics = () => request('/admin/analytics');
 export const getAdminUsers = (params) => request('/admin/users', { params });
 export const updateAdminUser = (id, data) => request(`/admin/users/${id}`, { method: 'PATCH', data });
 
+// orders
+export const createOrder = (data) => request('/orders', { method: 'POST', data });
+export const getMyOrders = () => request('/orders/my-orders');
+export const getMyOrderById = (id) => request(`/orders/my-orders/${id}`);
+
+export const getAdminOrders = () => request('/orders');
+export const getAdminOrderById = (id) => request(`/orders/${id}`);
+export const updateAdminOrderStatus = (id, data) =>
+  request(`/orders/${id}/status`, { method: 'PATCH', data });
+
 export default api;

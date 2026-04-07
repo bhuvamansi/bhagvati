@@ -32,15 +32,24 @@ import { AdminArchivesPage } from './pages/Admin/ArchivesComponent/AdminArchives
 import { AdminArchiveFormPage } from './pages/Admin/ArchivesComponent/AdminArchiveFormPage';
 import CheckoutPage from './pages/Checkout/CheckoutPage';
 import OrderSuccessPage from './pages/Checkout/OrderSuccessPage';
-
+import MyOrdersPage from './pages/Orders/MyOrdersPage';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
-  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
   return null;
 };
 
-const NotFoundPage = () => <section className="min-h-[60vh] grid place-items-center"><div className="text-center"><p className="tracking-label text-stone">404</p><h1 className="font-serif-display text-6xl text-charcoal">Page not found</h1></div></section>;
+const NotFoundPage = () => (
+  <section className="min-h-[60vh] grid place-items-center">
+    <div className="text-center">
+      <p className="tracking-label text-stone">404</p>
+      <h1 className="font-serif-display text-6xl text-charcoal">Page not found</h1>
+    </div>
+  </section>
+);
 
 function AppLayout() {
   const location = useLocation();
@@ -64,12 +73,21 @@ function AppLayout() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />
+          <Route path="/orders" element={<MyOrdersPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
-          <Route path="/admin" element={<ProtectedAdminRoute><AdminLayout /></ProtectedAdminRoute>}>
+
+          <Route
+            path="/admin"
+            element={
+              <ProtectedAdminRoute>
+                <AdminLayout />
+              </ProtectedAdminRoute>
+            }
+          >
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboardPage />} />
             <Route path="products" element={<AdminProductsPage />} />
@@ -86,6 +104,7 @@ function AppLayout() {
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
           </Route>
+
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
