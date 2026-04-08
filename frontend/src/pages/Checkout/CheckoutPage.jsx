@@ -4,6 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { createOrder } from '../../utils/api';
 import { formatCurrency } from '../../utils/format';
+import toast from 'react-hot-toast';
 
 const paymentMethods = [
   {
@@ -75,48 +76,71 @@ const CheckoutPage = () => {
     transferReference: '',
   });
 
+  const [errors, setErrors] = useState({});
+
   const shipping = useMemo(() => (totalPrice > 50000 ? 0 : 999), [totalPrice]);
   const discount = useMemo(() => (promoApplied ? Math.round(totalPrice * 0.1) : 0), [promoApplied, totalPrice]);
   const finalTotal = useMemo(() => totalPrice + shipping - discount, [totalPrice, shipping, discount]);
 
+  const fieldLabels = {
+    firstName: 'First name',
+    lastName: 'Last name',
+    email: 'Email',
+    phone: 'Phone number',
+    address: 'Street address',
+    city: 'City',
+    state: 'State',
+    pincode: 'Pincode',
+    country: 'Country',
+    cardName: 'Name on card',
+    cardNumber: 'Card number',
+    expiry: 'Expiry',
+    cvv: 'CVV',
+    upiId: 'UPI ID',
+    bankName: 'Bank name',
+    walletName: 'Wallet',
+    emiPlan: 'EMI plan',
+    transferReference: 'Transfer reference',
+  };
+
+  const getInputClass = (fieldName, extra = '') =>
+    `border px-4 py-4 font-sans text-sm text-charcoal outline-none ${
+      errors[fieldName] ? 'border-red-500' : 'border-silk focus:border-charcoal'
+    } ${extra}`;
+
+  const renderError = (fieldName) =>
+    errors[fieldName] ? (
+      <p className="mt-2 text-xs text-red-600 font-sans">{errors[fieldName]}</p>
+    ) : null;
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: '',
+      }));
+    }
   };
 
   const handleApplyPromo = () => {
     if (promoCode.trim().toLowerCase() === 'furniture10') {
       setPromoApplied(true);
+      toast.success('Promo code applied successfully!');
     } else {
       setPromoApplied(false);
-      alert('Invalid promo code');
+      toast.error('Invalid promo code');
     }
   };
 
-  const validatePayment = () => {
-    if (selectedPayment === 'card') {
-      return (
-        formData.cardName.trim() &&
-        formData.cardNumber.trim() &&
-        formData.expiry.trim() &&
-        formData.cvv.trim()
-      );
-    }
-
-    if (selectedPayment === 'upi') return formData.upiId.trim();
-    if (selectedPayment === 'netbanking') return formData.bankName.trim();
-    if (selectedPayment === 'wallet') return formData.walletName.trim();
-    if (selectedPayment === 'emi') return formData.emiPlan.trim();
-    if (selectedPayment === 'banktransfer') return formData.transferReference.trim();
-
-    return true;
-  };
-
-  const handlePlaceOrder = async (e) => {
-    e.preventDefault();
+  const validateForm = () => {
+    const newErrors = {};
 
     const requiredFields = [
       'firstName',
@@ -130,15 +154,72 @@ const CheckoutPage = () => {
       'country',
     ];
 
-    const emptyField = requiredFields.find((field) => !formData[field]?.trim());
+    requiredFields.forEach((field) => {
+      if (!formData[field]?.trim()) {
+        newErrors[field] = `${fieldLabels[field]} is required`;
+      }
+    });
 
-    if (emptyField) {
-      alert('Please fill all required delivery details.');
-      return;
+    if (formData.email?.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email.trim())) {
+        newErrors.email = 'Please enter a valid email address';
+      }
     }
 
-    if (!validatePayment()) {
-      alert('Please complete payment details.');
+    if (formData.phone?.trim()) {
+      const phoneRegex = /^[0-9]{10}$/;
+      if (!phoneRegex.test(formData.phone.trim())) {
+        newErrors.phone = 'Phone number must be 10 digits';
+      }
+    }
+
+    if (formData.pincode?.trim()) {
+      const pincodeRegex = /^[0-9]{6}$/;
+      if (!pincodeRegex.test(formData.pincode.trim())) {
+        newErrors.pincode = 'Pincode must be 6 digits';
+      }
+    }
+
+    if (selectedPayment === 'card') {
+      ['cardName', 'cardNumber', 'expiry', 'cvv'].forEach((field) => {
+        if (!formData[field]?.trim()) {
+          newErrors[field] = `${fieldLabels[field]} is required`;
+        }
+      });
+    }
+
+    if (selectedPayment === 'upi' && !formData.upiId.trim()) {
+      newErrors.upiId = 'UPI ID is required';
+    }
+
+    if (selectedPayment === 'netbanking' && !formData.bankName.trim()) {
+      newErrors.bankName = 'Bank name is required';
+    }
+
+    if (selectedPayment === 'wallet' && !formData.walletName.trim()) {
+      newErrors.walletName = 'Wallet is required';
+    }
+
+    if (selectedPayment === 'emi' && !formData.emiPlan.trim()) {
+      newErrors.emiPlan = 'EMI plan is required';
+    }
+
+    if (selectedPayment === 'banktransfer' && !formData.transferReference.trim()) {
+      newErrors.transferReference = 'Transfer reference is required';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handlePlaceOrder = async (e) => {
+    e.preventDefault();
+
+    const isValid = validateForm();
+
+    if (!isValid) {
+      toast.error('Please fill all required fields correctly.');
       return;
     }
 
@@ -188,20 +269,25 @@ const CheckoutPage = () => {
       if (data?.success && data?.order?._id) {
         dispatch({ type: 'CLEAR_CART' });
 
-        navigate(`/order-success/${data.order._id}`, {
-          replace: true,
-          state: {
-            order: data.order,
-            justPlaced: true,
-          },
-        });
+        toast.success('Order placed successfully!');
+
+        setTimeout(() => {
+          navigate(`/order-success/${data.order._id}`, {
+            replace: true,
+            state: {
+              order: data.order,
+              justPlaced: true,
+            },
+          });
+        }, 1200);
+
         return;
       }
 
-      alert(data?.message || 'Failed to place order');
+      toast.error(data?.message || 'Failed to place order');
     } catch (error) {
       console.error(error);
-      alert(error?.message || 'Something went wrong while placing order');
+      toast.error(error?.message || 'Something went wrong while placing order');
     } finally {
       setIsPlacingOrder(false);
     }
@@ -237,38 +323,53 @@ const CheckoutPage = () => {
               <p className="tracking-label text-stone mb-8">Contact Details</p>
 
               <div className="grid gap-5 sm:grid-cols-2">
-                <input
-                  type="text"
-                  name="firstName"
-                  placeholder="First name"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  className="border border-silk px-4 py-4 font-sans text-sm text-charcoal outline-none focus:border-charcoal"
-                />
-                <input
-                  type="text"
-                  name="lastName"
-                  placeholder="Last name"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  className="border border-silk px-4 py-4 font-sans text-sm text-charcoal outline-none focus:border-charcoal"
-                />
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Email address"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="sm:col-span-2 border border-silk px-4 py-4 font-sans text-sm text-charcoal outline-none focus:border-charcoal"
-                />
-                <input
-                  type="tel"
-                  name="phone"
-                  placeholder="Phone number"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="sm:col-span-2 border border-silk px-4 py-4 font-sans text-sm text-charcoal outline-none focus:border-charcoal"
-                />
+                <div>
+                  <input
+                    type="text"
+                    name="firstName"
+                    placeholder="First name"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    className={getInputClass('firstName', 'w-full')}
+                  />
+                  {renderError('firstName')}
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    name="lastName"
+                    placeholder="Last name"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    className={getInputClass('lastName', 'w-full')}
+                  />
+                  {renderError('lastName')}
+                </div>
+
+                <div className="sm:col-span-2">
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Email address"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className={getInputClass('email', 'w-full')}
+                  />
+                  {renderError('email')}
+                </div>
+
+                <div className="sm:col-span-2">
+                  <input
+                    type="tel"
+                    name="phone"
+                    placeholder="Phone number"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className={getInputClass('phone', 'w-full')}
+                  />
+                  {renderError('phone')}
+                </div>
               </div>
             </section>
 
@@ -276,54 +377,76 @@ const CheckoutPage = () => {
               <p className="tracking-label text-stone mb-8">Delivery Address</p>
 
               <div className="grid gap-5 sm:grid-cols-2">
-                <input
-                  type="text"
-                  name="address"
-                  placeholder="Street address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  className="sm:col-span-2 border border-silk px-4 py-4 font-sans text-sm text-charcoal outline-none focus:border-charcoal"
-                />
-                <input
-                  type="text"
-                  name="apartment"
-                  placeholder="Apartment, suite, landmark"
-                  value={formData.apartment}
-                  onChange={handleChange}
-                  className="sm:col-span-2 border border-silk px-4 py-4 font-sans text-sm text-charcoal outline-none focus:border-charcoal"
-                />
-                <input
-                  type="text"
-                  name="city"
-                  placeholder="City"
-                  value={formData.city}
-                  onChange={handleChange}
-                  className="border border-silk px-4 py-4 font-sans text-sm text-charcoal outline-none focus:border-charcoal"
-                />
-                <input
-                  type="text"
-                  name="state"
-                  placeholder="State"
-                  value={formData.state}
-                  onChange={handleChange}
-                  className="border border-silk px-4 py-4 font-sans text-sm text-charcoal outline-none focus:border-charcoal"
-                />
-                <input
-                  type="text"
-                  name="pincode"
-                  placeholder="Pincode"
-                  value={formData.pincode}
-                  onChange={handleChange}
-                  className="border border-silk px-4 py-4 font-sans text-sm text-charcoal outline-none focus:border-charcoal"
-                />
-                <input
-                  type="text"
-                  name="country"
-                  placeholder="Country"
-                  value={formData.country}
-                  onChange={handleChange}
-                  className="border border-silk px-4 py-4 font-sans text-sm text-charcoal outline-none focus:border-charcoal"
-                />
+                <div className="sm:col-span-2">
+                  <input
+                    type="text"
+                    name="address"
+                    placeholder="Street address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    className={getInputClass('address', 'w-full')}
+                  />
+                  {renderError('address')}
+                </div>
+
+                <div className="sm:col-span-2">
+                  <input
+                    type="text"
+                    name="apartment"
+                    placeholder="Apartment, suite, landmark"
+                    value={formData.apartment}
+                    onChange={handleChange}
+                    className="w-full border border-silk px-4 py-4 font-sans text-sm text-charcoal outline-none focus:border-charcoal"
+                  />
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    name="city"
+                    placeholder="City"
+                    value={formData.city}
+                    onChange={handleChange}
+                    className={getInputClass('city', 'w-full')}
+                  />
+                  {renderError('city')}
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    name="state"
+                    placeholder="State"
+                    value={formData.state}
+                    onChange={handleChange}
+                    className={getInputClass('state', 'w-full')}
+                  />
+                  {renderError('state')}
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    name="pincode"
+                    placeholder="Pincode"
+                    value={formData.pincode}
+                    onChange={handleChange}
+                    className={getInputClass('pincode', 'w-full')}
+                  />
+                  {renderError('pincode')}
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    name="country"
+                    placeholder="Country"
+                    value={formData.country}
+                    onChange={handleChange}
+                    className={getInputClass('country', 'w-full')}
+                  />
+                  {renderError('country')}
+                </div>
               </div>
             </section>
 
@@ -345,7 +468,21 @@ const CheckoutPage = () => {
                         type="radio"
                         name="paymentMethod"
                         checked={selectedPayment === method.key}
-                        onChange={() => setSelectedPayment(method.key)}
+                        onChange={() => {
+                          setSelectedPayment(method.key);
+                          setErrors((prev) => ({
+                            ...prev,
+                            cardName: '',
+                            cardNumber: '',
+                            expiry: '',
+                            cvv: '',
+                            upiId: '',
+                            bankName: '',
+                            walletName: '',
+                            emiPlan: '',
+                            transferReference: '',
+                          }));
+                        }}
                         className="mt-1"
                       />
                       <div>
@@ -363,38 +500,53 @@ const CheckoutPage = () => {
 
               {selectedPayment === 'card' && (
                 <div className="mt-6 grid gap-5 sm:grid-cols-2">
-                  <input
-                    type="text"
-                    name="cardName"
-                    placeholder="Name on card"
-                    value={formData.cardName}
-                    onChange={handleChange}
-                    className="sm:col-span-2 border border-silk px-4 py-4 font-sans text-sm text-charcoal outline-none focus:border-charcoal"
-                  />
-                  <input
-                    type="text"
-                    name="cardNumber"
-                    placeholder="Card number"
-                    value={formData.cardNumber}
-                    onChange={handleChange}
-                    className="sm:col-span-2 border border-silk px-4 py-4 font-sans text-sm text-charcoal outline-none focus:border-charcoal"
-                  />
-                  <input
-                    type="text"
-                    name="expiry"
-                    placeholder="MM/YY"
-                    value={formData.expiry}
-                    onChange={handleChange}
-                    className="border border-silk px-4 py-4 font-sans text-sm text-charcoal outline-none focus:border-charcoal"
-                  />
-                  <input
-                    type="password"
-                    name="cvv"
-                    placeholder="CVV"
-                    value={formData.cvv}
-                    onChange={handleChange}
-                    className="border border-silk px-4 py-4 font-sans text-sm text-charcoal outline-none focus:border-charcoal"
-                  />
+                  <div className="sm:col-span-2">
+                    <input
+                      type="text"
+                      name="cardName"
+                      placeholder="Name on card"
+                      value={formData.cardName}
+                      onChange={handleChange}
+                      className={getInputClass('cardName', 'w-full')}
+                    />
+                    {renderError('cardName')}
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <input
+                      type="text"
+                      name="cardNumber"
+                      placeholder="Card number"
+                      value={formData.cardNumber}
+                      onChange={handleChange}
+                      className={getInputClass('cardNumber', 'w-full')}
+                    />
+                    {renderError('cardNumber')}
+                  </div>
+
+                  <div>
+                    <input
+                      type="text"
+                      name="expiry"
+                      placeholder="MM/YY"
+                      value={formData.expiry}
+                      onChange={handleChange}
+                      className={getInputClass('expiry', 'w-full')}
+                    />
+                    {renderError('expiry')}
+                  </div>
+
+                  <div>
+                    <input
+                      type="password"
+                      name="cvv"
+                      placeholder="CVV"
+                      value={formData.cvv}
+                      onChange={handleChange}
+                      className={getInputClass('cvv', 'w-full')}
+                    />
+                    {renderError('cvv')}
+                  </div>
                 </div>
               )}
 
@@ -406,8 +558,9 @@ const CheckoutPage = () => {
                     placeholder="Enter UPI ID (example@upi)"
                     value={formData.upiId}
                     onChange={handleChange}
-                    className="w-full border border-silk px-4 py-4 font-sans text-sm text-charcoal outline-none focus:border-charcoal"
+                    className={getInputClass('upiId', 'w-full')}
                   />
+                  {renderError('upiId')}
                 </div>
               )}
 
@@ -419,8 +572,9 @@ const CheckoutPage = () => {
                     placeholder="Enter bank name"
                     value={formData.bankName}
                     onChange={handleChange}
-                    className="w-full border border-silk px-4 py-4 font-sans text-sm text-charcoal outline-none focus:border-charcoal"
+                    className={getInputClass('bankName', 'w-full')}
                   />
+                  {renderError('bankName')}
                 </div>
               )}
 
@@ -430,7 +584,7 @@ const CheckoutPage = () => {
                     name="walletName"
                     value={formData.walletName}
                     onChange={handleChange}
-                    className="w-full border border-silk bg-white px-4 py-4 font-sans text-sm text-charcoal outline-none focus:border-charcoal"
+                    className={getInputClass('walletName', 'w-full bg-white')}
                   >
                     <option value="">Select wallet</option>
                     <option value="Paytm">Paytm</option>
@@ -438,6 +592,7 @@ const CheckoutPage = () => {
                     <option value="Mobikwik">Mobikwik</option>
                     <option value="Freecharge">Freecharge</option>
                   </select>
+                  {renderError('walletName')}
                 </div>
               )}
 
@@ -447,7 +602,7 @@ const CheckoutPage = () => {
                     name="emiPlan"
                     value={formData.emiPlan}
                     onChange={handleChange}
-                    className="w-full border border-silk bg-white px-4 py-4 font-sans text-sm text-charcoal outline-none focus:border-charcoal"
+                    className={getInputClass('emiPlan', 'w-full bg-white')}
                   >
                     <option value="">Select EMI plan</option>
                     <option value="3 Months">3 Months</option>
@@ -455,6 +610,7 @@ const CheckoutPage = () => {
                     <option value="9 Months">9 Months</option>
                     <option value="12 Months">12 Months</option>
                   </select>
+                  {renderError('emiPlan')}
                 </div>
               )}
 
@@ -466,8 +622,9 @@ const CheckoutPage = () => {
                     placeholder="Enter transfer reference / remark"
                     value={formData.transferReference}
                     onChange={handleChange}
-                    className="w-full border border-silk px-4 py-4 font-sans text-sm text-charcoal outline-none focus:border-charcoal"
+                    className={getInputClass('transferReference', 'w-full')}
                   />
+                  {renderError('transferReference')}
                 </div>
               )}
 
