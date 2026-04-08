@@ -35,6 +35,10 @@ import OrderSuccessPage from './pages/Checkout/OrderSuccessPage';
 import MyOrdersPage from './pages/Orders/MyOrdersPage';
 import AdminOrdersPage from './pages/Admin/AdminOrdersPage';
 
+// NEW
+import DeliveryLoginPage from './pages/Delivery/DeliveryLoginPage';
+import DeliveryDashboardPage from './pages/Delivery/DeliveryDashboardPage';
+
 const ScrollToTop = () => {
   const { pathname } = useLocation();
 
@@ -57,11 +61,12 @@ const NotFoundPage = () => (
 function AppLayout() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isDeliveryRoute = location.pathname.startsWith('/delivery');
 
   return (
     <div className="bg-ivory min-h-screen flex flex-col">
       <ScrollToTop />
-      {!isAdminRoute && <Header />}
+      {!isAdminRoute && !isDeliveryRoute && <Header />}
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -82,6 +87,9 @@ function AppLayout() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
+
+          <Route path="/delivery/login" element={<DeliveryLoginPage />} />
+          <Route path="/delivery/dashboard" element={<DeliveryDashboardPage />} />
 
           <Route
             path="/admin"
@@ -112,7 +120,7 @@ function AppLayout() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
-      {!isAdminRoute && <Footer />}
+      {!isAdminRoute && !isDeliveryRoute && <Footer />}
     </div>
   );
 }

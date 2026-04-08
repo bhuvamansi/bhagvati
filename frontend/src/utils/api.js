@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const USER_TOKEN_KEY = 'sbf_user_token';
 const ADMIN_TOKEN_KEY = 'sbf_admin_token';
+const DELIVERY_TOKEN_KEY = 'sbf_delivery_token';
 
 const resolveBaseUrl = () => {
   const envUrl = import.meta.env.VITE_API_URL?.trim();
@@ -56,26 +57,37 @@ const setStorage = (key, value) => {
   else localStorage.removeItem(key);
 };
 
-export const setAuthToken = (token, type = 'user') => {
-  const key = type === 'admin' ? ADMIN_TOKEN_KEY : USER_TOKEN_KEY;
-  setStorage(key, token);
-
-  const userToken = getStorage(USER_TOKEN_KEY);
+const syncActiveToken = () => {
+  const deliveryToken = getStorage(DELIVERY_TOKEN_KEY);
   const adminToken = getStorage(ADMIN_TOKEN_KEY);
-  const activeToken = adminToken || userToken;
+  const userToken = getStorage(USER_TOKEN_KEY);
 
-  if (activeToken) api.defaults.headers.common.Authorization = `Bearer ${activeToken}`;
-  else delete api.defaults.headers.common.Authorization;
+  const activeToken = deliveryToken || adminToken || userToken;
+
+  if (activeToken) {
+    api.defaults.headers.common.Authorization = `Bearer ${activeToken}`;
+  } else {
+    delete api.defaults.headers.common.Authorization;
+  }
+};
+
+export const setAuthToken = (token, type = 'user') => {
+  const key =
+    type === 'admin'
+      ? ADMIN_TOKEN_KEY
+      : type === 'delivery'
+      ? DELIVERY_TOKEN_KEY
+      : USER_TOKEN_KEY;
+
+  setStorage(key, token);
+  syncActiveToken();
 };
 
 export const getStoredToken = () => getStorage(USER_TOKEN_KEY);
 export const getStoredAdminToken = () => getStorage(ADMIN_TOKEN_KEY);
+export const getStoredDeliveryToken = () => getStorage(DELIVERY_TOKEN_KEY);
 
-const existingAdminToken = getStoredAdminToken();
-const existingUserToken = getStoredToken();
-if (existingAdminToken || existingUserToken) {
-  api.defaults.headers.common.Authorization = `Bearer ${existingAdminToken || existingUserToken}`;
-}
+syncActiveToken();
 
 export const registerUser = (data) => request('/auth/user/register', { method: 'POST', data });
 export const loginUser = (data) => request('/auth/user/login', { method: 'POST', data });
@@ -97,24 +109,44 @@ export const logoutAdmin = async () => {
 };
 export const getCurrentAdmin = () => request('/auth/me');
 
+// delivery
+export const loginDelivery = async (data) => {
+  const result = await request('/delivery/login', { method: 'POST', data });
+  if (result?.token) setAuthToken(result.token, 'delivery');
+  return result;
+};
+
+export const logoutDelivery = async () => {
+  const result = await request('/delivery/logout', { method: 'POST' });
+  setAuthToken(null, 'delivery');
+  return result;
+};
+
+export const getCurrentDelivery = () => request('/delivery/me');
+export const getDeliveryBoys = () => request('/delivery');
+
+// products
 export const getProducts = (params) => request('/products', { params });
 export const getProductById = (id) => request(`/products/${id}`);
 export const createProduct = (data) => request('/products', { method: 'POST', data });
 export const updateProduct = (id, data) => request(`/products/${id}`, { method: 'PUT', data });
 export const deleteProduct = (id) => request(`/products/${id}`, { method: 'DELETE' });
 
+// projects
 export const getProjects = (params) => request('/projects', { params });
 export const getProjectById = (id) => request(`/projects/${id}`);
 export const createProject = (data) => request('/projects', { method: 'POST', data });
 export const updateProject = (id, data) => request(`/projects/${id}`, { method: 'PATCH', data });
 export const deleteProject = (id) => request(`/projects/${id}`, { method: 'DELETE' });
 
+// archives
 export const getArchives = (params) => request('/archives', { params });
 export const getArchiveById = (id) => request(`/archives/${id}`);
 export const createArchive = (data) => request('/archives', { method: 'POST', data });
 export const updateArchive = (id, data) => request(`/archives/${id}`, { method: 'PATCH', data });
 export const deleteArchive = (id) => request(`/archives/${id}`, { method: 'DELETE' });
 
+// contact/newsletter/settings
 export const submitContactForm = (data) => request('/contact', { method: 'POST', data });
 export const submitBespokeInquiry = (data) => request('/contact', { method: 'POST', data: { ...data, type: 'bespoke' } });
 export const getContacts = (params) => request('/contact', { params });
@@ -144,5 +176,23 @@ export const getAdminOrders = () => request('/orders');
 export const getAdminOrderById = (id) => request(`/orders/${id}`);
 export const updateAdminOrderStatus = (id, data) =>
   request(`/orders/${id}/status`, { method: 'PATCH', data });
+
+export const assignAdminDeliveryBoy = (id, data) =>
+  request(`/orders/${id}/assign-delivery`, { method: 'PATCH', data });
+
+export const getMyDeliveryOrders = () => request('/orders/delivery/my-orders');
+export const updateDeliveryOrderStatus = (id, data) =>
+  request(`/orders/delivery/${id}/status`, { method: 'PATCH', data });
+
+// notifications
+export const getUserNotifications = () => request('/notifications/user');
+export const getAdminNotifications = () => request('/notifications/admin');
+export const getDeliveryNotifications = () => request('/notifications/delivery');
+export const markUserNotificationRead = (id) =>
+  request(`/notifications/user/${id}/read`, { method: 'PATCH' });
+export const markAdminNotificationRead = (id) =>
+  request(`/notifications/admin/${id}/read`, { method: 'PATCH' });
+export const markDeliveryNotificationRead = (id) =>
+  request(`/notifications/delivery/${id}/read`, { method: 'PATCH' });
 
 export default api;

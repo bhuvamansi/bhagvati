@@ -7,6 +7,7 @@ import Project from './models/Project.js';
 import Archive from './models/Archive.js';
 import SiteSettings from './models/SiteSettings.js';
 import FAQ from './models/FAQ.js';
+import DeliveryBoy from './models/DeliveryBoy.js';
 
 dotenv.config();
 
@@ -199,6 +200,49 @@ const settings = {
   },
 };
 
+const deliveryBoys = [
+  {
+    name: 'Rahul Patel',
+    email: 'rahul.delivery@bhagvati.com',
+    password: 'Rahul@12345',
+    phone: '9876543210',
+    isActive: true,
+    isAvailable: true,
+  },
+  {
+    name: 'Amit Sharma',
+    email: 'amit.delivery@bhagvati.com',
+    password: 'Amit@12345',
+    phone: '9876543211',
+    isActive: true,
+    isAvailable: true,
+  },
+  {
+    name: 'Vikas Yadav',
+    email: 'vikas.delivery@bhagvati.com',
+    password: 'Vikas@12345',
+    phone: '9876543212',
+    isActive: true,
+    isAvailable: true,
+  },
+  {
+    name: 'Sanjay Kumar',
+    email: 'sanjay.delivery@bhagvati.com',
+    password: 'Sanjay@12345',
+    phone: '9876543213',
+    isActive: true,
+    isAvailable: true,
+  },
+  {
+    name: 'Manoj Verma',
+    email: 'manoj.delivery@bhagvati.com',
+    password: 'Manoj@12345',
+    phone: '9876543214',
+    isActive: true,
+    isAvailable: true,
+  },
+];
+
 const seedData = async () => {
   try {
     await connectDB();
@@ -210,6 +254,7 @@ const seedData = async () => {
       Archive.deleteMany(),
       SiteSettings.deleteMany(),
       FAQ.deleteMany(),
+      DeliveryBoy.deleteMany(),
     ]);
 
     await Admin.create(adminUser);
@@ -219,9 +264,20 @@ const seedData = async () => {
     await FAQ.insertMany(faqs);
     await SiteSettings.create(settings);
 
+    // create() so password hooks run
+    for (const person of deliveryBoys) {
+      await DeliveryBoy.create(person);
+    }
+
     console.log('Seed completed successfully.');
     console.log('Admin email   : admin@shreebhagvatifurniture.com');
     console.log('Admin password: Admin@1234');
+
+    console.log('\nDelivery Logins:');
+    deliveryBoys.forEach((boy, index) => {
+      console.log(`${index + 1}. ${boy.email} | ${boy.password}`);
+    });
+
     process.exit(0);
   } catch (error) {
     console.error('Seed failed:', error);

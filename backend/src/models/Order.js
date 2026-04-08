@@ -50,7 +50,16 @@ const statusTimelineSchema = new mongoose.Schema(
   {
     status: {
       type: String,
-      enum: ['placed', 'under_process', 'packed', 'shipped', 'delivered', 'cancelled'],
+      enum: [
+        'placed',
+        'under_process',
+        'assigned',
+        'accepted',
+        'packed',
+        'shipped',
+        'delivered',
+        'cancelled',
+      ],
       required: true,
     },
     note: {
@@ -61,6 +70,11 @@ const statusTimelineSchema = new mongoose.Schema(
     changedAt: {
       type: Date,
       default: Date.now,
+    },
+    changedBy: {
+      type: String,
+      enum: ['system', 'user', 'admin', 'delivery'],
+      default: 'system',
     },
   },
   { _id: false }
@@ -140,6 +154,31 @@ const orderSchema = new mongoose.Schema(
       default: [],
     },
     deliveredAt: {
+      type: Date,
+      default: null,
+    },
+
+    // NEW DELIVERY FIELDS
+    assignedDeliveryBoy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'DeliveryBoy',
+      default: null,
+    },
+    deliveryStatus: {
+      type: String,
+      enum: ['unassigned', 'assigned', 'accepted', 'out_for_delivery', 'completed'],
+      default: 'unassigned',
+      index: true,
+    },
+    deliveryAssignedAt: {
+      type: Date,
+      default: null,
+    },
+    deliveryAcceptedAt: {
+      type: Date,
+      default: null,
+    },
+    deliveryCompletedAt: {
       type: Date,
       default: null,
     },

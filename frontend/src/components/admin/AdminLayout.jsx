@@ -100,6 +100,21 @@ const AdminLayout = () => {
               <p className="text-sm text-stone break-all">{admin?.email}</p>
             </div>
 
+            <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+              <p className="text-xs uppercase tracking-[0.24em] text-amber-700">
+                Delivery panel
+              </p>
+              <p className="mt-2 text-sm text-amber-800">
+                Delivery partner login:
+              </p>
+              <Link
+                to="/delivery/login"
+                className="mt-3 inline-flex rounded-full border border-amber-300 px-4 py-2 text-xs uppercase tracking-[0.2em] text-amber-800 transition hover:bg-amber-100"
+              >
+                Open delivery login
+              </Link>
+            </div>
+
             <button
               type="button"
               onClick={handleLogout}
@@ -154,6 +169,14 @@ const AdminLayout = () => {
                 </NavLink>
               ))}
             </div>
+
+            <Link
+              to="/delivery/login"
+              onClick={closeSidebar}
+              className="mt-6 block rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+            >
+              Delivery Login
+            </Link>
 
             <button
               type="button"

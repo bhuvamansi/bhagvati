@@ -11,6 +11,7 @@ import { connectDB } from './src/config/db.js';
 import { errorHandler } from './src/middleware/errorHandler.js';
 
 import authRoutes from './src/routes/auth.routes.js';
+import unifiedAuthRoutes from './src/routes/unifiedAuth.routes.js';
 import productRoutes from './src/routes/product.routes.js';
 import projectRoutes from './src/routes/project.routes.js';
 import uploadRoutes from './src/routes/upload.routes.js';
@@ -21,6 +22,8 @@ import siteSettingsRoutes from './src/routes/siteSettings.routes.js';
 import newsletterRoutes from './src/routes/newsletter.routes.js';
 import adminRoutes from './src/routes/admin.routes.js';
 import orderRoutes from './src/routes/orderRoutes.js';
+import deliveryRoutes from './src/routes/delivery.routes.js';
+import notificationRoutes from './src/routes/notification.routes.js';
 
 dotenv.config();
 
@@ -56,6 +59,7 @@ const allowedOrigins = [
       process.env.CLIENT_URL,
       'https://localhost:5000',
       'https://localhost:5173',
+      'http://localhost:5173',
       'http://127.0.0.1:5173',
       'http://localhost:3000',
       'http://127.0.0.1:3000',
@@ -107,6 +111,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/unified-auth', unifiedAuthRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/orders', orderRoutes);
@@ -117,6 +122,8 @@ app.use('/api/archives', archiveRoutes);
 app.use('/api/site-settings', siteSettingsRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/delivery', deliveryRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 if (process.env.NODE_ENV === 'production') {
   const frontendPath = path.join(__dirname, '../frontend/dist');

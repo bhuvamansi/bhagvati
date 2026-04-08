@@ -9,6 +9,7 @@ import {
 const router = express.Router();
 
 router.use(protectAdmin);
+
 router.get('/analytics', getAdminAnalytics);
 router.get('/users', getAdminUsers);
 router.patch('/users/:id', updateAdminUser);

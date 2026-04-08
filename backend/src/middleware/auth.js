@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import Admin from '../models/Admin.js';
 import User from '../models/User.js';
+import DeliveryBoy from '../models/DeliveryBoy.js';
 import { AppError } from './errorHandler.js';
 
 const extractBearerToken = (req) => {
@@ -83,6 +84,42 @@ export const protectUser = async (req, res, next) => {
     next();
   } catch (error) {
     return next(new AppError('Invalid or expired user token.', 401));
+  }
+};
+
+// =========================
+// Protect Delivery Routes
+// =========================
+export const protectDelivery = async (req, res, next) => {
+  try {
+    const token =
+      req.cookies?.deliveryToken ||
+      extractBearerToken(req);
+
+    if (!token) {
+      return next(new AppError('Delivery authentication required.', 401));
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (decoded.type !== 'delivery') {
+      return next(new AppError('Invalid delivery token.', 401));
+    }
+
+    const deliveryBoy = await DeliveryBoy.findById(decoded.id).select('-password');
+
+    if (!deliveryBoy) {
+      return next(new AppError('Delivery account no longer exists.', 401));
+    }
+
+    if (deliveryBoy.isActive === false) {
+      return next(new AppError('Delivery account is inactive.', 403));
+    }
+
+    req.deliveryBoy = deliveryBoy;
+    next();
+  } catch (error) {
+    return next(new AppError('Invalid or expired delivery token.', 401));
   }
 };
 
